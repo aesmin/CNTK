@@ -5617,8 +5617,6 @@ __global__ void _assignOneHotAsSparse(ElemType *indices,
                                       ElemType *targetBuffer,
                                       size_t num_class,
                                       int num_item,
-                                      size_t num_rows,
-                                      size_t num_columns,
                                       size_t num_elements)
 {
     const CUDA_LONG index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -5634,28 +5632,22 @@ __global__ void _assignOneHotAsSparse(ElemType *indices,
         if (indices[index] >= 0 && indices[index] < num_class)
         {
             targetBuffer[index] = 1;
-            majorIndices[index] = (block_id * num_class * num_item + item_id + num_item * (int)indices[index]) % (num_rows * num_class);
+            majorIndices[index] = (item_id * num_class) + (int)indices[index];
         }
         else
         {
             targetBuffer[index] = 0;
-            majorIndices[index] = (block_id * num_class * num_item + item_id) % (num_rows * num_class);
+            majorIndices[index] = item_id * num_class;
         }
-    }
 
-    if (index  < num_columns)
-    {
-        secondaryIndices[index + 1] = num_rows * (index + 1);
-    }
+        if (item_id == 0)
+            secondaryIndices[block_id + 1] = num_item * (block_id + 1);
 
-    if (index == 0)
-    {
-        secondaryIndices[0] = 0;
+        if (index == 0)
+            secondaryIndices[0] = 0;
     }
 }
 
-}
-}
-}
+}}}
 
 #endif // !CPUONLY

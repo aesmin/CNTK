@@ -1217,7 +1217,6 @@ void GPUSparseMatrix<ElemType>::ColumnwiseScaleAndWeightedAdd(ElemType alpha, co
         c.Data(),
         a.GetNumRows(), a.GetNumCols());
 }
-
 template <class ElemType>
 void GPUSparseMatrix<ElemType>::TensorShuffleScaleAndAdd(ElemType keepWeight, const GPUSparseMatrix<ElemType>& a, size_t D, size_t S, size_t M, size_t K, size_t T, 
     ElemType scaleFactor, const GPUSparseMatrix<ElemType>& b, GPUSparseMatrix<ElemType>& c)
@@ -2914,9 +2913,7 @@ GPUSparseMatrix<ElemType>& GPUSparseMatrix<ElemType>::AssignOneHot(const GPUMatr
         LogicError("AssignOneHot: Matrix a is empty.");
 
     if (GetFormat() != matrixFormatSparseCSC)
-    {
         LogicError("AssignOneHot: Matrix format is not supported.");
-    }
 
     if (axis >= shape.size())
         LogicError("AssignOneHot: axis is not correct");
@@ -2927,8 +2924,10 @@ GPUSparseMatrix<ElemType>& GPUSparseMatrix<ElemType>::AssignOneHot(const GPUMatr
 
     int num_class = (int)shape[axis];
 
-    auto nCols = a.GetNumCols();
-    auto nRows = num_class * a.GetNumRows();
+    auto nRows = item_size * num_class;
+    auto nCols = a.GetNumElements() / item_size;
+    if ((GetNumRows() != nRows) || (GetNumCols() != nCols))
+        LogicError("AssignOneHot: Target matrix size is not correct");
     this->RequireSizeAndAllocate(nRows, nCols, a.GetNumElements());
     this->PrepareDevice();
 
@@ -2945,9 +2944,8 @@ GPUSparseMatrix<ElemType>& GPUSparseMatrix<ElemType>::AssignOneHot(const GPUMatr
                                                                                       targetData,
                                                                                       num_class,
                                                                                       item_size,
-                                                                                      a.GetNumRows(),
-                                                                                      a.GetNumCols(),
                                                                                       N);
+    
 
     return *this;
 }

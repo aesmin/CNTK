@@ -499,9 +499,9 @@ def _sparse_to_dense_network_cache(input_shape, is_sequence):
     from cntk.ops import times, input, sequence
 
     if is_sequence:
-        temp_input = sequence.input(input_shape)
+        temp_input = sequence.input(input_shape, is_sparse=True)
     else:
-        temp_input = input(input_shape)
+        temp_input = input(input_shape, is_sparse=True)
 
     eye_shape = input_shape[-1]
     return times(temp_input, np.eye(eye_shape))
